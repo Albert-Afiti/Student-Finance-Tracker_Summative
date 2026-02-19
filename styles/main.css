@@ -617,7 +617,7 @@ body[data-theme="dark"] .btn-secondary:hover {
 .edit-btn:focus { outline: 3px solid #28A745; outline-offset: 2px; }
 
 .delete-btn {
-    padding: 0.35rem 0.75rem;
+    padding: 20px 0 20px 0;
     border: 1px solid #f5c6cb;
     border-radius: 5px;
     background-color: #fff5f5;
@@ -626,6 +626,8 @@ body[data-theme="dark"] .btn-secondary:hover {
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
+    width: 70px;
+    height: 35px;
 }
 .delete-btn:hover { background-color: #fde8ea; }
 .delete-btn:focus { outline: 3px solid #28A745; outline-offset: 2px; }
@@ -1219,8 +1221,9 @@ body[data-theme="dark"] .income-empty-msg {
 }
 
 .income-history-item {
-    display: grid;
-    grid-template-columns: 130px 1fr 120px 90px 40px;
+    display: flex;
+    justify-content: space-between;
+    /* grid-template-columns: 130px 1fr 120px 90px 40px; */
     align-items: center;
     gap: 0.75rem;
     background: #fff;
@@ -1425,6 +1428,70 @@ body[data-theme="dark"] .quick-add-drawer { background: #1a1a2e; }
 body[data-theme="dark"] .quick-add-title { color: #66aaff; }
 .quick-add-close { cursor: pointer; color: #6C757D; font-size: 1.1rem; background: none; border: none; }
 
+
+/* Hamburger button — small screens only */
+.nav-hamburger {
+    display: none;                  /* hidden by default; shown via media query below */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    background: none;
+    border: 1px solid rgba(0, 123, 255, 0.35);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 6px;
+    transition: background 0.2s, border-color 0.2s;
+    /* Position it inside the nav bar */
+    margin-left: auto;
+    margin-right: 0;
+}
+.nav-hamburger:hover {
+    background: #e6f0ff;
+    border-color: #007BFF;
+}
+.nav-hamburger:focus {
+    outline: 3px solid #28A745;
+    outline-offset: 2px;
+}
+
+body[data-theme="dark"] .nav-hamburger {
+    border-color: rgba(40, 167, 69, 0.4);
+}
+body[data-theme="dark"] .nav-hamburger:hover {
+    background: #0d2545;
+    border-color: #28A745;
+}
+
+/* The three bars */
+.hamburger-bar {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background-color: #007BFF;
+    border-radius: 2px;
+    transition: transform 0.25s ease, opacity 0.2s ease;
+}
+body[data-theme="dark"] .hamburger-bar {
+    background-color: #28A745;
+}
+
+/* Animate bars into an X when menu is open */
+.nav-hamburger[aria-expanded="true"] .hamburger-bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.nav-hamburger[aria-expanded="true"] .hamburger-bar:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+.nav-hamburger[aria-expanded="true"] .hamburger-bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+
+
 /* ── RESPONSIVE — NEW SECTIONS ───────────────── */
 @media (max-width: 768px) {
     .income-form-row { grid-template-columns: 1fr 1fr; }
@@ -1445,4 +1512,66 @@ body[data-theme="dark"] .quick-add-title { color: #66aaff; }
     .quick-add-drawer { right: 1rem; width: calc(100vw - 2rem); }
     .overview-banner  { grid-template-columns: 1fr 1fr; }
     .budget-row       { grid-template-columns: 80px 1fr 60px; }
+}
+
+@media (max-width: 767px) {
+
+    /* Show the hamburger button */
+    .nav-hamburger {
+        display: flex;
+    }
+
+    /* Make the nav a flex column so button sits on its own row */
+    .nav {
+        padding: 0.5rem 1rem;
+    }
+
+    /* Hide the nav list by default */
+    .nav-list {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.25rem;
+        padding: 0.5rem 0 0.25rem;
+        border-top: 1px solid #dee2e6;
+        margin-top: 0.4rem;
+        animation: fadeIn 0.2s ease;
+    }
+
+    body[data-theme="dark"] .nav-list {
+        border-top-color: #495057;
+    }
+
+    /* Show list when it has the .open class */
+    .nav-list.open {
+        display: flex;
+    }
+
+    /* Make each nav item full width */
+    .nav-list li {
+        width: 100%;
+    }
+
+    .nav-btn {
+        width: 100%;
+        text-align: left;
+        padding: 0.65rem 1rem;
+        border-radius: 6px;
+        font-size: 0.95rem;
+    }
+}
+
+/* ── Large screen: always visible, no hamburger ── */
+@media (min-width: 768px) {
+
+    .nav-hamburger {
+        display: none !important;   /* completely hidden on desktop */
+    }
+
+    /* Ensure the list is always visible on desktop regardless of .open state */
+    .nav-list {
+        display: flex !important;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
 }

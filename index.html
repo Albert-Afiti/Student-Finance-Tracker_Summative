@@ -19,8 +19,24 @@
     </div>
 </header>
 
+
+
 <nav role="navigation" aria-label="Main navigation" class="nav">
-    <ul class="nav-list">
+
+    <!-- Hamburger button — visible only on small screens -->
+    <button
+        id="navToggle"
+        class="nav-hamburger"
+        aria-label="Toggle navigation menu"
+        aria-expanded="false"
+        aria-controls="navList"
+    >
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+    </button>
+
+    <ul class="nav-list" id="navList">
         <li><button data-target="about"     class="nav-btn">About</button></li>
         <li><button data-target="dashboard" class="nav-btn">Dashboard</button></li>
         <li><button data-target="records"   class="nav-btn">Records</button></li>
@@ -31,6 +47,7 @@
         <li><button data-target="scraper"   class="nav-btn">Scraper</button></li>
         <li><button data-target="settings"  class="nav-btn">Settings</button></li>
     </ul>
+
 </nav>
 
 <main id="mainContent" role="main" class="main">
@@ -265,7 +282,8 @@
             </div>
         </div>
 
-        <h3 style="font-size:0.95rem; font-weight:700; color:#007BFF; margin-bottom:0.75rem;">Log Income</h3>
+        <h3 style="font-size:0.95rem; font-weight:700; color:#007BFF; margin-bottom:0.75rem;">
+        </h3>
         <div class="income-form-row">
             <div class="inline-form-group">
                 <label for="incSource">Source</label>
@@ -684,7 +702,7 @@ function renderIncomeHistory() {
             '<div class="income-history-desc">' + (e.note || '&mdash;') + '</div>' +
             '<div class="income-history-date">' + formattedDate + '</div>' +
             '<div class="income-history-amount">+$' + e.amount.toFixed(2) + '</div>' +
-            '<button class="delete-btn income-del-btn" data-id="' + e.id + '" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Remove</button>' +
+            '<button class=" -btn income-del-btn" data-id="' + e.id + '" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Remove</button>' +
             '</div>';
     }).join('');
 
@@ -1081,5 +1099,6 @@ if (addBillBtn) {
 <script src="scripts/search.js"></script>
 <script src="scripts/state.js"></script>
 <script src="scripts/ui.js"></script>
+<script src="scripts/burger.js"></script>
 </body>
 </html>
