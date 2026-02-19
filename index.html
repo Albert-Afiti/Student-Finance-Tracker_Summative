@@ -6,199 +6,1076 @@
     <title>Student Finance Tracker</title>
     <link rel="stylesheet" href="styles/main.css" />
 </head>
-<body class="body">
+<body>
 
 <a href="#mainContent" class="skip-link">Skip to Main Content</a>
 
 <header class="header">
-    <div class="header-container">
+    <div class="header-inner">
         <h1 class="header-title">Student Finance Tracker</h1>
-        <button id="darkModeToggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
-            <span class="toggle-icon">🌙</span>
+        <button id="darkModeToggle" class="theme-toggle" aria-label="Toggle dark mode">
+            <span id="themeIcon">Dark</span>
         </button>
     </div>
 </header>
 
 <nav role="navigation" aria-label="Main navigation" class="nav">
     <ul class="nav-list">
-        <li><button data-target="about" class="nav-button">About</button></li>
-        <li><button data-target="dashboard" class="nav-button">Dashboard</button></li>
-        <li><button data-target="records" class="nav-button">Records</button></li>
-        <li><button data-target="forms" class="nav-button">Add Record</button></li>
-        <li><button data-target="scraper" class="nav-button">Scraper</button></li>
-        <li><button data-target="settings" class="nav-button">Settings</button></li>
+        <li><button data-target="about"     class="nav-btn">About</button></li>
+        <li><button data-target="dashboard" class="nav-btn">Dashboard</button></li>
+        <li><button data-target="records"   class="nav-btn">Records</button></li>
+        <li><button data-target="income"    class="nav-btn">Income</button></li>
+        <li><button data-target="goals"     class="nav-btn">Savings Goals</button></li>
+        <li><button data-target="bills"     class="nav-btn">Bills</button></li>
+        <li><button data-target="forms"     class="nav-btn">Add Record</button></li>
+        <li><button data-target="scraper"   class="nav-btn">Scraper</button></li>
+        <li><button data-target="settings"  class="nav-btn">Settings</button></li>
     </ul>
 </nav>
 
 <main id="mainContent" role="main" class="main">
 
-    <section id="about" class="section">
-        <h2 class="section-title">Welcome To The Finance Tracker</h2>
-        <p class="section-text">
-            This application is a student finance tracker, designed to help manage budgets, track daily expenses, and stay accountable to spending limits.
+    <!-- ABOUT -->
+    <section id="about" class="section hidden">
+        <h2 class="section-title">Welcome to Student Finance Tracker!</h2>
+        <p class="section-subtitle">Manage your money, master your budget.</p>
+        <p>
+            This is a student finance tracker that helps you log expenses, track income,
+            set a monthly budget, and monitor your spending by category.
         </p>
-        <p class="section-text">
-            Created by <a href="https://github.com/Peniel-source" target="_blank" class="link">Peniel-source</a> (GitHub) |
-            <a href="mailto:p.obeng@alustudent.com" class="link">p.obeng@alustudent.com</a>
+        <p style="margin-top:0.75rem;">
+            Created by <a href="https://github.com/Albert-Afiti" target="_blank">Albert-Afiti</a>
+            &mdash; <a href="mailto:a.afiti@alustudent.com">a.afiti@alustudent.com</a>
         </p>
+        <h4 style="margin-top:1rem; color:#007BFF; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em;">What this tracker does:</h4>
+        <ul class="about-list">
+            <li>Saves data to your browser with localStorage</li>
+            <li>Import and export records as JSON</li>
+            <li>Regex-powered live search with match highlighting</li>
+            <li>7-day spending chart + multi-period trend graphs on the dashboard</li>
+            <li>Top-level financial overview: balance, income, expenses, net savings</li>
+            <li>Budget vs. Actual tracker with visual progress bars and doughnut chart</li>
+            <li>Income tracking by source (loans, scholarships, part-time work, parents)</li>
+            <li>Savings goals with visual progress toward each target</li>
+            <li>Upcoming bills and subscription reminders</li>
+            <li>Supports USD, RWF, EUR, and GHS display</li>
+            <li>Built-in HTML scraper utility</li>
+        </ul>
     </section>
 
-    <section id="dashboard" class="section">
-        <h2 class="section-title">Financial Summary</h2>
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="section hidden">
+        <h2 class="section-title">Dashboard</h2>
+        <p class="section-subtitle">Your financial snapshot at a glance.</p>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <p class="stat-label">Total Expenses</p>
-                <div class="stat-value"><span id="totalAmount">0.00 USD</span></div>
+        <div class="overview-banner" id="overviewBanner">
+            <div class="overview-card">
+                <div class="overview-label">Total Balance</div>
+                <div class="overview-value" id="ovBalance">$0.00</div>
             </div>
-            <div class="stat-card">
-                <p class="stat-label">Total Records</p>
-                <div class="stat-value"><span id="totalRecords">0</span> Transactions</div>
+            <div class="overview-card green">
+                <div class="overview-label">Monthly Income</div>
+                <div class="overview-value positive" id="ovIncome">$0.00</div>
             </div>
-            <div class="stat-card">
-                <p class="stat-label">Top Category</p>
-                <div class="stat-value"><span id="topCategory">-</span></div>
+            <div class="overview-card red">
+                <div class="overview-label">Total Expenses</div>
+                <div class="overview-value negative" id="ovExpenses">$0.00</div>
+            </div>
+            <div class="overview-card purple">
+                <div class="overview-label">Net Savings</div>
+                <div class="overview-value" id="ovSavings">$0.00</div>
             </div>
         </div>
 
         <div role="status" aria-live="polite" id="capMessage" class="budget-status">
-            Current Budget Status: Loading...
+            Calculating budget status...
         </div>
 
-        <h3 class="chart-title">Last 7 Days Expenses</h3>
-        <div class="chart-wrapper">
-            <div id="trendChart" class="chart"></div>
+        <div class="stats-grid" style="margin-bottom:1.75rem;">
+            <div class="stat-card">
+                <p class="stat-label">Total Spent</p>
+                <p class="stat-value" id="totalAmount">0.00 USD</p>
+            </div>
+            <div class="stat-card">
+                <p class="stat-label">Total Records</p>
+                <p class="stat-value"><span id="totalRecords">0</span> records</p>
+            </div>
+            <div class="stat-card">
+                <p class="stat-label">Top Category</p>
+                <p class="stat-value" id="topCategory">—</p>
+            </div>
         </div>
-        <div class="chart-labels">
-            <span>7 Days Ago</span><span>Today</span>
+
+        <div class="subsection-tabs" role="tablist">
+            <button class="subsection-tab active" role="tab" data-panel="panelChart">7-Day Chart</button>
+            <button class="subsection-tab" role="tab" data-panel="panelBudgetVsActual">Budget vs Actual</button>
+            <button class="subsection-tab" role="tab" data-panel="panelTrends">Trend Graphs</button>
+        </div>
+
+        <div id="panelChart" class="subsection-panel active">
+            <h3 class="chart-title">Spending — Last 7 Days</h3>
+            <div class="chart-wrapper">
+                <div id="trendChart" class="chart"></div>
+            </div>
+            <div class="chart-labels">
+                <span>7 days ago</span>
+                <span>Today</span>
+            </div>
+        </div>
+
+        <div id="panelBudgetVsActual" class="subsection-panel">
+            <h3 class="chart-title" style="margin-bottom:1rem;">Budget vs. Actual Spending</h3>
+            <div class="budget-chart-grid" id="budgetVsActualGrid">
+                <div class="budget-row">
+                    <span class="budget-cat-label">Food</span>
+                    <div class="budget-track"><div class="budget-fill" style="width:72%"></div></div>
+                    <span class="budget-pct">72%</span>
+                </div>
+                <div class="budget-row">
+                    <span class="budget-cat-label">Books</span>
+                    <div class="budget-track"><div class="budget-fill warn" style="width:88%"></div></div>
+                    <span class="budget-pct">88%</span>
+                </div>
+                <div class="budget-row">
+                    <span class="budget-cat-label">Transport</span>
+                    <div class="budget-track"><div class="budget-fill over" style="width:100%"></div></div>
+                    <span class="budget-pct">105%</span>
+                </div>
+                <div class="budget-row">
+                    <span class="budget-cat-label">Fun</span>
+                    <div class="budget-track"><div class="budget-fill" style="width:40%"></div></div>
+                    <span class="budget-pct">40%</span>
+                </div>
+                <div class="budget-row">
+                    <span class="budget-cat-label">Fees</span>
+                    <div class="budget-track"><div class="budget-fill" style="width:60%"></div></div>
+                    <span class="budget-pct">60%</span>
+                </div>
+            </div>
+
+            <div class="doughnut-row">
+                <div class="doughnut-wrap">
+                    <svg viewBox="0 0 100 100" id="doughnutSVG" style="width:130px;height:130px;transform:rotate(-90deg)">
+                        <circle cx="50" cy="50" r="38" fill="none" stroke="#e9ecef" stroke-width="18"/>
+                        <circle cx="50" cy="50" r="38" fill="none" stroke="#28A745" stroke-width="18"
+                                stroke-dasharray="100 139" stroke-dashoffset="0" id="dSegSpent"/>
+                        <circle cx="50" cy="50" r="38" fill="none" stroke="#e9ecef" stroke-width="18"
+                                stroke-dasharray="39 200" stroke-dashoffset="-100" id="dSegRemain"/>
+                    </svg>
+                    <div class="doughnut-center">
+                        <div class="doughnut-center-pct" id="doughnutPct">72%</div>
+                        <div class="doughnut-center-lbl">used</div>
+                    </div>
+                </div>
+                <div class="doughnut-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background:#28A745"></div>Spent so far</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#007BFF"></div>Remaining budget</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#DC3545"></div>Over budget</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="panelTrends" class="subsection-panel">
+            <div class="trend-tabs">
+                <button class="trend-tab active" data-period="7">7 Days</button>
+                <button class="trend-tab" data-period="30">30 Days</button>
+                <button class="trend-tab" data-period="90">3 Months</button>
+            </div>
+            <div class="graph-canvas-wrap">
+                <canvas id="trendCanvas" aria-label="Spending trend graph"></canvas>
+            </div>
+            <div class="chart-labels" style="margin-top:0.5rem;">
+                <span id="trendStartLabel">Start</span>
+                <span id="trendEndLabel">Today</span>
+            </div>
         </div>
     </section>
 
-    <section id="records" class="section">
-        <h2 class="section-title">Expense Records</h2>
+    <!-- RECORDS -->
+    <section id="records" class="section hidden">
+        <h2 class="section-title">Records</h2>
 
         <div class="controls">
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Search records..." class="input" />
+            <div class="search-row">
+                <input type="text" id="searchInput" placeholder="Search records (regex supported)..." class="input" />
                 <label class="checkbox-label">
-                    <input type="checkbox" id="caseToggle" class="checkbox" /> Case-insensitive
+                    <input type="checkbox" id="caseToggle" /> Case-insensitive
                 </label>
             </div>
-            <div id="regexStatus" role="status" aria-live="polite" class="status-text"></div>
-
-            <div class="sort-buttons">
-                <button id="sortDate" data-dir="asc" class="sort-button">Date <span class="sort-icon">↑</span></button>
-                <button id="sortDescription" data-dir="asc" class="sort-button">Alphabetical Order <span class="sort-icon">↑</span></button>
-                <button id="sortAmount" data-dir="asc" class="sort-button">Amount <span class="sort-icon">↑</span></button>
+            <div id="regexStatus" role="status" aria-live="polite" class="status-msg"></div>
+            <div class="sort-row">
+                <span class="sort-label">Sort by:</span>
+                <button id="sortDate"        data-dir="asc" class="sort-btn active">Date <span class="sort-arrow">v</span></button>
+                <button id="sortDescription" data-dir="asc" class="sort-btn">A-Z <span class="sort-arrow">^</span></button>
+                <button id="sortAmount"      data-dir="asc" class="sort-btn">Amount <span class="sort-arrow">^</span></button>
             </div>
         </div>
 
         <div id="recordsContainer" class="records-container"></div>
 
-        <div id="deleteModal" class="modal">
-            <div class="modal-content">
-                <h3 class="modal-title">Confirm Deletion</h3>
-                <p class="modal-text">Do you really want to delete this record?</p>
+        <div id="deleteModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modal">
+                <h3 id="modalTitle">Confirm Delete</h3>
+                <p>Are you sure you want to delete this record? This cannot be undone.</p>
                 <div class="modal-actions">
-                    <button id="cancelDeleteBtn" class="modal-button cancel">Cancel</button>
-                    <button id="confirmDeleteBtn" data-record-id="" class="modal-button delete">Delete</button>
+                    <button id="cancelDeleteBtn"  class="btn btn-secondary">Cancel</button>
+                    <button id="confirmDeleteBtn" data-record-id="" class="btn btn-danger">Delete</button>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="forms" class="section">
-        <h2 class="section-title">Add/Edit Record</h2>
+    <!-- INCOME TRACKING -->
+    <section id="income" class="section hidden">
+        <h2 class="section-title">Income Tracking</h2>
+        <p class="section-subtitle">Log all your funding sources to keep your balance accurate.</p>
+
+        <div class="total-income-banner">
+            <div>
+                <div class="total-income-label">Total Monthly Income</div>
+                <div class="total-income-value" id="totalIncomeDisplay">$0.00</div>
+            </div>
+        </div>
+
+        <div class="income-sources-grid" id="incomeSourcesGrid">
+            <div class="income-source-card">
+                <div class="income-source-name">Scholarship</div>
+                <div class="income-source-amount" id="incScholarship">$0.00</div>
+                <div class="income-source-meta">Cumulative logged</div>
+            </div>
+            <div class="income-source-card">
+                <div class="income-source-name">Student Loan</div>
+                <div class="income-source-amount" id="incLoan">$0.00</div>
+                <div class="income-source-meta">Cumulative logged</div>
+            </div>
+            <div class="income-source-card">
+                <div class="income-source-name">Parents / Family</div>
+                <div class="income-source-amount" id="incParents">$0.00</div>
+                <div class="income-source-meta">Cumulative logged</div>
+            </div>
+            <div class="income-source-card">
+                <div class="income-source-name">Part-time Work</div>
+                <div class="income-source-amount" id="incWork">$0.00</div>
+                <div class="income-source-meta">Cumulative logged</div>
+            </div>
+            <div class="income-source-card">
+                <div class="income-source-name">Other</div>
+                <div class="income-source-amount" id="incOther">$0.00</div>
+                <div class="income-source-meta">Cumulative logged</div>
+            </div>
+        </div>
+
+        <h3 style="font-size:0.95rem; font-weight:700; color:#007BFF; margin-bottom:0.75rem;">Log Income</h3>
+        <div class="income-form-row">
+            <div class="inline-form-group">
+                <label for="incSource">Source</label>
+                <select id="incSource" class="input">
+                    <option value="Scholarship">Scholarship</option>
+                    <option value="Loan">Student Loan</option>
+                    <option value="Parents">Parents / Family</option>
+                    <option value="Work">Part-time Work</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="inline-form-group">
+                <label for="incAmount">Amount (USD)</label>
+                <input type="number" id="incAmount" class="input" placeholder="0.00" step="0.01" min="0" />
+            </div>
+            <div class="inline-form-group">
+                <label for="incNote">Note (optional)</label>
+                <input type="text" id="incNote" class="input" placeholder="e.g. October stipend" />
+            </div>
+            <div class="inline-form-group">
+                <label for="incDate">Date</label>
+                <input type="date" id="incDate" class="input" />
+            </div>
+            <div class="inline-form-group" style="justify-content:flex-end;">
+                <label>&nbsp;</label>
+                <button id="addIncomeBtn" class="btn btn-primary">+ Add</button>
+            </div>
+        </div>
+        <div id="incomeStatus" role="status" aria-live="polite" class="status-msg" style="margin-top:0.5rem;"></div>
+
+        <div style="margin-top:1.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                <h3 style="font-size:0.95rem; font-weight:700; color:#007BFF;">Income History</h3>
+                <button id="clearIncomeBtn" class="delete-btn" style="font-size:0.78rem;">Clear All</button>
+            </div>
+            <div id="incomeHistoryList" class="income-history-list">
+                <p class="income-empty-msg">No income logged yet. Use the form above to add your first entry.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SAVINGS GOALS -->
+    <section id="goals" class="section hidden">
+        <h2 class="section-title">Savings Goals</h2>
+        <p class="section-subtitle">Set short-term targets and track your progress visually.</p>
+
+        <div class="goals-grid" id="goalsGrid">
+            <div class="goal-card">
+                <div class="goal-name">Emergency Fund</div>
+                <div class="goal-amounts">$120 saved of $300 target</div>
+                <div class="goal-progress-track">
+                    <div class="goal-progress-fill" style="width:40%"></div>
+                </div>
+                <div class="goal-pct">40%</div>
+                <div class="goal-target-date">Target: Dec 2025</div>
+                <div class="goal-actions">
+                    <button class="edit-btn">Add Funds</button>
+                    <button class="delete-btn" onclick="this.closest('.goal-card').remove()">Remove</button>
+                </div>
+            </div>
+            <div class="goal-card">
+                <div class="goal-name">Semester Trip</div>
+                <div class="goal-amounts">$50 saved of $400 target</div>
+                <div class="goal-progress-track">
+                    <div class="goal-progress-fill" style="width:12%"></div>
+                </div>
+                <div class="goal-pct">12%</div>
+                <div class="goal-target-date">Target: Jun 2026</div>
+                <div class="goal-actions">
+                    <button class="edit-btn">Add Funds</button>
+                    <button class="delete-btn" onclick="this.closest('.goal-card').remove()">Remove</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="add-goal-form">
+            <div class="add-goal-form-title">Add New Savings Goal</div>
+            <div class="goal-form-grid">
+                <div class="inline-form-group">
+                    <label for="goalName">Goal Name</label>
+                    <input type="text" id="goalName" class="input" placeholder="e.g. New Laptop" />
+                </div>
+                <div class="inline-form-group">
+                    <label for="goalTarget">Target ($)</label>
+                    <input type="number" id="goalTarget" class="input" placeholder="500" step="1" min="1" />
+                </div>
+                <div class="inline-form-group">
+                    <label for="goalSaved">Already Saved ($)</label>
+                    <input type="number" id="goalSaved" class="input" placeholder="0" step="0.01" min="0" />
+                </div>
+                <div class="inline-form-group">
+                    <label for="goalDate">Target Date</label>
+                    <input type="date" id="goalDate" class="input" />
+                </div>
+            </div>
+            <button id="addGoalBtn" class="btn btn-primary">Save Goal</button>
+            <div id="goalStatus" role="status" aria-live="polite" class="status-msg" style="margin-top:0.5rem;"></div>
+        </div>
+    </section>
+
+    <!-- BILLS & SUBSCRIPTIONS -->
+    <section id="bills" class="section hidden">
+        <h2 class="section-title">Bills &amp; Subscriptions</h2>
+        <p class="section-subtitle">Track recurring expenses so you are never caught off guard.</p>
+
+        <div class="bills-list" id="billsList">
+            <div class="bill-item due-soon">
+                <div class="bill-info">
+                    <div class="bill-name">Mobile Data Plan</div>
+                    <div class="bill-meta">Due in 3 days · Monthly</div>
+                </div>
+                <span class="bill-badge due-soon">Due Soon</span>
+                <div class="bill-amount">$12.00</div>
+            </div>
+            <div class="bill-item overdue">
+                <div class="bill-info">
+                    <div class="bill-name">Rent Contribution</div>
+                    <div class="bill-meta">Overdue by 2 days · Monthly</div>
+                </div>
+                <span class="bill-badge overdue">Overdue</span>
+                <div class="bill-amount">$150.00</div>
+            </div>
+            <div class="bill-item paid">
+                <div class="bill-info">
+                    <div class="bill-name">Streaming Service</div>
+                    <div class="bill-meta">Paid · Next due in 28 days</div>
+                </div>
+                <span class="bill-badge paid">Paid</span>
+                <div class="bill-amount">$8.99</div>
+            </div>
+            <div class="bill-item">
+                <div class="bill-info">
+                    <div class="bill-name">Electricity (shared)</div>
+                    <div class="bill-meta">Due in 10 days · Monthly</div>
+                </div>
+                <span class="bill-badge" style="background:#e6f0ff;color:#007BFF;">Upcoming</span>
+                <div class="bill-amount">$25.00</div>
+            </div>
+        </div>
+
+        <h3 style="font-size:0.95rem; font-weight:700; color:#007BFF; margin-bottom:0.75rem; margin-top:1.5rem;">Add a Bill / Subscription</h3>
+        <div class="income-form-row">
+            <div class="inline-form-group">
+                <label for="billName">Name</label>
+                <input type="text" id="billName" class="input" placeholder="Netflix, Rent..." />
+            </div>
+            <div class="inline-form-group">
+                <label for="billAmount">Amount ($)</label>
+                <input type="number" id="billAmount" class="input" placeholder="0.00" step="0.01" min="0" />
+            </div>
+            <div class="inline-form-group">
+                <label for="billDueDate">Due Date</label>
+                <input type="date" id="billDueDate" class="input" />
+            </div>
+            <div class="inline-form-group">
+                <label for="billFreq">Frequency</label>
+                <select id="billFreq" class="input">
+                    <option value="Monthly">Monthly</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Annually">Annually</option>
+                    <option value="One-time">One-time</option>
+                </select>
+            </div>
+            <div class="inline-form-group" style="justify-content:flex-end;">
+                <label>&nbsp;</label>
+                <button id="addBillBtn" class="btn btn-primary">+ Add</button>
+            </div>
+        </div>
+        <div id="billStatus" role="status" aria-live="polite" class="status-msg" style="margin-top:0.5rem;"></div>
+    </section>
+
+    <!-- ADD / EDIT RECORD -->
+    <section id="forms" class="section hidden">
+        <h2 class="section-title">Add / Edit Record</h2>
         <form id="recordForm" class="form">
             <input type="hidden" id="recordId" value="" />
 
             <div class="form-group">
-                <label for="desc" class="form-label">Description:</label>
-                <input type="text" id="desc" required class="input" />
-                <span id="descriptionError" class="error-text"></span>
+                <label for="desc">Description</label>
+                <input type="text" id="desc" required class="input" placeholder="e.g. Lunch at cafeteria" />
+                <span id="descriptionError" class="error-msg"></span>
             </div>
 
             <div class="form-group">
-                <label for="amount" class="form-label">Amount:</label>
-                <input type="number" step="0.01" id="amount" required class="input" />
-                <span id="amountError" class="error-text"></span>
+                <label for="amount">Amount (USD)</label>
+                <input type="number" step="0.01" id="amount" required class="input" placeholder="0.00" />
+                <span id="amountError" class="error-msg"></span>
             </div>
 
             <div class="form-group">
-                <label for="category" class="form-label">Category:</label>
-                <select id="category" required class="select">
-                    <option value="">-- Select Category --</option>
+                <label for="date">Date</label>
+                <input type="date" id="date" required class="input" />
+                <span id="dateError" class="error-msg"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select id="category" required class="input">
+                    <option value="">-- Select a category --</option>
                     <option value="Food">Food</option>
-                    <option value="Books">Books/Education</option>
+                    <option value="Books">Books / Education</option>
                     <option value="Transport">Transport</option>
                     <option value="Entertainment">Entertainment</option>
                     <option value="Fees">Fees</option>
                     <option value="Other">Other</option>
                 </select>
-                <span id="categoryError" class="error-text"></span>
+                <span id="categoryError" class="error-msg"></span>
             </div>
 
-            <div class="form-group">
-                <label for="date" class="form-label">Date:</label>
-                <input type="date" id="date" required class="input" />
-                <span id="dateError" class="error-text"></span>
+            <div class="form-actions">
+                <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display:none;">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Record</button>
             </div>
-
-            <button type="submit" class="submit-button">Save Record</button>
         </form>
     </section>
 
-    <section id="scraper" class="section hidden-section">
-        <h2 class="section-title">jQuery Scraper</h2>
-        <label for="htmlInput" class="form-label">Paste HTML snippet below:</label>
-        <textarea id="htmlInput" rows="10" class="scraper-textarea" placeholder='Paste static HTML snippet here...'></textarea>
-        <button id="scrapeBtn" class="scraper-btn">Scrape</button>
-        <label for="output" class="form-label" style="margin-top: 1.5rem; display: block;">JSON Output:</label>
-        <pre id="output" class="scraper-output"></pre>
+    <!-- SCRAPER -->
+    <section id="scraper" class="section hidden">
+        <h2 class="section-title">HTML Scraper</h2>
+        <p>Paste an HTML snippet below to extract headings, links, images, tables, and form fields.</p>
+
+        <div class="form-group" style="margin-top:1rem;">
+            <label for="htmlInput">HTML Input</label>
+            <textarea id="htmlInput" rows="10" class="input scraper-textarea" placeholder="Paste HTML here..."></textarea>
+        </div>
+        <button id="scrapeBtn" class="btn btn-primary">Run Scraper</button>
+
+        <div class="form-group" style="margin-top:1.5rem;">
+            <label for="output">JSON Output</label>
+            <pre id="output" class="scraper-output">// Output will appear here</pre>
+        </div>
     </section>
 
-    <section id="settings" class="section">
-        <h2 class="section-title">Settings & Data Management</h2>
+    <!-- SETTINGS -->
+    <section id="settings" class="section hidden">
+        <h2 class="section-title">Settings &amp; Data Management</h2>
 
-        <div class="settings-wrapper">
-            <div class="settings-group">
-                <h3 class="settings-title">Display Currency</h3>
-                <label for="currencySelect" class="form-label">Select Base Currency:</label>
-                <select id="currencySelect" class="select">
-                    <option value="USD">USD ($)</option>
-                    <option value="RWF">RWF (Fr)</option>
-                </select>
-                <p class="section-text">Conversion rates are default</p>
-            </div>
+        <div class="settings-group">
+            <h3>Display Currency</h3>
+            <label for="currencySelect">Select currency:</label>
+            <select id="currencySelect" class="input">
+                <option value="USD">USD ($)</option>
+                <option value="RWF">RWF (Fr)</option>
+                <option value="GHS">GHS (GH&#8373;)</option>
+                <option value="EUR">EUR (&euro;)</option>
+            </select>
+            <p class="hint">1 USD = 1,300 RWF &nbsp;|&nbsp; 1 USD = 0.85 EUR &nbsp;|&nbsp; 1 USD = 6.5 GH&#8373;</p>
+        </div>
 
-            <div class="settings-group">
-                <h3 class="settings-title">Budget Amount (in USD)</h3>
-                <label for="budget" class="form-label">Set Monthly Budget Amount (USD):</label>
-                <input type="number" id="budget" value="200" class="input" />
-            </div>
+        <div class="settings-group">
+            <h3>Monthly Budget</h3>
+            <label for="budget">Budget amount (USD):</label>
+            <input type="number" id="budget" value="200" class="input" />
+            <p class="hint">Used across all budget vs. actual calculations.</p>
+        </div>
 
-            <div class="settings-group">
-                <h3 class="settings-title">Data Import & Export</h3>
-                <div class="import-group">
-                    <label for="importFile" class="form-label">1. Import JSON File</label>
+        <div class="settings-group">
+            <h3>Import / Export</h3>
+            <div class="import-export">
+                <div>
+                    <label for="importFile">Import JSON file:</label>
                     <input type="file" id="importFile" accept=".json" class="input" />
-                    <button id="importBtn" class="action-button">Import & Validate JSON</button>
-                    <div id="importStatus" role="status" aria-live="polite" class="status-text"></div>
+                    <button id="importBtn" class="btn btn-secondary">Import &amp; Validate</button>
+                    <div id="importStatus" role="status" aria-live="polite" class="status-msg"></div>
                 </div>
-
-                <div class="export-group">
-                    <button id="exportBtn" class="action-button">Export All Data to JSON</button>
+                <div>
+                    <label>Export data:</label>
+                    <p class="hint">Download all records as a JSON file.</p>
+                    <button id="exportBtn" class="btn btn-secondary">Export to JSON</button>
                 </div>
             </div>
         </div>
     </section>
+
 </main>
 
+<!-- QUICK-ADD FAB -->
+<button class="fab" id="fabBtn" aria-label="Quick add expense" title="Quick add expense">+</button>
+
+<div class="quick-add-drawer" id="quickAddDrawer" role="dialog" aria-modal="true" aria-label="Quick add expense">
+    <div class="quick-add-title">
+        Quick Add Expense
+        <button class="quick-add-close" id="quickAddClose" aria-label="Close">X</button>
+    </div>
+    <div class="form-group">
+        <label for="qDesc" style="font-size:0.8rem;font-weight:600;color:#007BFF;">Description</label>
+        <input type="text" id="qDesc" class="input" placeholder="e.g. Coffee" />
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.75rem;">
+        <div class="inline-form-group">
+            <label for="qAmount">Amount ($)</label>
+            <input type="number" id="qAmount" class="input" placeholder="0.00" step="0.01" min="0" />
+        </div>
+        <div class="inline-form-group">
+            <label for="qCat">Category</label>
+            <select id="qCat" class="input">
+                <option value="Food">Food</option>
+                <option value="Books">Books</option>
+                <option value="Transport">Transport</option>
+                <option value="Entertainment">Fun</option>
+                <option value="Fees">Fees</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+    </div>
+    <button id="qSaveBtn" class="btn btn-primary" style="width:100%;">Save Expense</button>
+    <div id="qStatus" role="status" aria-live="polite" class="status-msg" style="margin-top:0.5rem;"></div>
+</div>
+
 <footer class="footer">
-    <p>&copy; 2025 Peniel | Frontend Web Dev Summative</p>
+    <p>&copy; 2026 Albert-Afiti &nbsp;|&nbsp; Frontend Web Dev Summative &mdash; C3</p>
 </footer>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+/* =====================================================
+   INCOME MODULE — fully functional localStorage persistence
+   ===================================================== */
+const INCOME_KEY = 'sft_income_entries';
+
+function getIncomeEntries() {
+    try { return JSON.parse(localStorage.getItem(INCOME_KEY)) || []; }
+    catch (e) { return []; }
+}
+
+function saveIncomeEntries(entries) {
+    localStorage.setItem(INCOME_KEY, JSON.stringify(entries));
+}
+
+const SOURCE_ID_MAP = {
+    Scholarship: 'incScholarship',
+    Loan:        'incLoan',
+    Parents:     'incParents',
+    Work:        'incWork',
+    Other:       'incOther'
+};
+
+const SOURCE_LABEL_MAP = {
+    Scholarship: 'Scholarship',
+    Loan:        'Student Loan',
+    Parents:     'Parents / Family',
+    Work:        'Part-time Work',
+    Other:       'Other'
+};
+
+function refreshIncomeSummary() {
+    const entries = getIncomeEntries();
+
+    /* Reset all source cards */
+    Object.values(SOURCE_ID_MAP).forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = '$0.00';
+    });
+
+    /* Sum by source */
+    var totals = {};
+    entries.forEach(function(e) {
+        totals[e.source] = (totals[e.source] || 0) + e.amount;
+    });
+
+    Object.keys(totals).forEach(function(src) {
+        var id = SOURCE_ID_MAP[src];
+        var el = document.getElementById(id);
+        if (el) el.textContent = '$' + totals[src].toFixed(2);
+    });
+
+    /* Grand total */
+    var grand = entries.reduce(function(sum, e) { return sum + e.amount; }, 0);
+
+    var displayEl = document.getElementById('totalIncomeDisplay');
+    if (displayEl) displayEl.textContent = '$' + grand.toFixed(2);
+
+    /* Dashboard overview income card */
+    var ovIncome = document.getElementById('ovIncome');
+    if (ovIncome) ovIncome.textContent = '$' + grand.toFixed(2);
+
+    /* Update net savings on dashboard */
+    updateDashboardSavings(grand);
+}
+
+function updateDashboardSavings(income) {
+    /* Try to read expenses total if ui.js exposes it; fall back to 0 */
+    var expenseEl = document.getElementById('ovExpenses');
+    var expenseVal = expenseEl ? parseFloat(expenseEl.textContent.replace(/[^0-9.-]/g, '')) || 0 : 0;
+    var savings = income - expenseVal;
+    var savingsEl = document.getElementById('ovSavings');
+    if (savingsEl) {
+        savingsEl.textContent = '$' + savings.toFixed(2);
+        savingsEl.style.color = savings >= 0 ? '#28A745' : '#DC3545';
+    }
+    var balanceEl = document.getElementById('ovBalance');
+    if (balanceEl) balanceEl.textContent = '$' + savings.toFixed(2);
+}
+
+function renderIncomeHistory() {
+    var list = document.getElementById('incomeHistoryList');
+    if (!list) return;
+
+    var entries = getIncomeEntries();
+
+    if (entries.length === 0) {
+        list.innerHTML = '<p class="income-empty-msg">No income logged yet. Use the form above to add your first entry.</p>';
+        return;
+    }
+
+    /* Sort newest first */
+    var sorted = entries.slice().sort(function(a, b) {
+        return new Date(b.date) - new Date(a.date);
+    });
+
+    list.innerHTML = sorted.map(function(e) {
+        var formattedDate = new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+        });
+        return '<div class="income-history-item" data-id="' + e.id + '">' +
+            '<div class="income-history-source">' + (e.sourceLabel || e.source) + '</div>' +
+            '<div class="income-history-desc">' + (e.note || '&mdash;') + '</div>' +
+            '<div class="income-history-date">' + formattedDate + '</div>' +
+            '<div class="income-history-amount">+$' + e.amount.toFixed(2) + '</div>' +
+            '<button class="delete-btn income-del-btn" data-id="' + e.id + '" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Remove</button>' +
+            '</div>';
+    }).join('');
+
+    /* Attach delete listeners */
+    list.querySelectorAll('.income-del-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var id = btn.getAttribute('data-id');
+            var updated = getIncomeEntries().filter(function(e) { return e.id !== id; });
+            saveIncomeEntries(updated);
+            refreshIncomeSummary();
+            renderIncomeHistory();
+        });
+    });
+}
+
+/* Add income entry */
+var addIncomeBtn = document.getElementById('addIncomeBtn');
+if (addIncomeBtn) {
+    addIncomeBtn.addEventListener('click', function() {
+        var srcEl    = document.getElementById('incSource');
+        var amtEl    = document.getElementById('incAmount');
+        var noteEl   = document.getElementById('incNote');
+        var dateEl   = document.getElementById('incDate');
+        var status   = document.getElementById('incomeStatus');
+
+        var src  = srcEl ? srcEl.value : '';
+        var amt  = amtEl ? parseFloat(amtEl.value) : NaN;
+        var note = noteEl ? noteEl.value.trim() : '';
+        var date = dateEl ? dateEl.value : '';
+
+        /* Validation */
+        if (!src) {
+            status.textContent = 'Please select a source.';
+            status.style.color = '#DC3545';
+            return;
+        }
+        if (isNaN(amt) || amt <= 0) {
+            status.textContent = 'Please enter a valid amount greater than 0.';
+            status.style.color = '#DC3545';
+            return;
+        }
+        if (!date) {
+            status.textContent = 'Please pick a date.';
+            status.style.color = '#DC3545';
+            return;
+        }
+
+        var entry = {
+            id:          Date.now().toString(),
+            source:      src,
+            sourceLabel: SOURCE_LABEL_MAP[src] || src,
+            amount:      amt,
+            note:        note,
+            date:        date
+        };
+
+        var entries = getIncomeEntries();
+        entries.push(entry);
+        saveIncomeEntries(entries);
+
+        refreshIncomeSummary();
+        renderIncomeHistory();
+
+        /* Clear form fields */
+        if (amtEl)  amtEl.value  = '';
+        if (noteEl) noteEl.value = '';
+        if (dateEl) dateEl.value = '';
+
+        status.textContent = '$' + amt.toFixed(2) + ' from ' + SOURCE_LABEL_MAP[src] + ' logged successfully.';
+        status.style.color = '#28A745';
+        setTimeout(function() { status.textContent = ''; }, 3000);
+    });
+}
+
+/* Clear all income */
+var clearIncomeBtn = document.getElementById('clearIncomeBtn');
+if (clearIncomeBtn) {
+    clearIncomeBtn.addEventListener('click', function() {
+        if (!confirm('Clear ALL income entries? This cannot be undone.')) return;
+        saveIncomeEntries([]);
+        refreshIncomeSummary();
+        renderIncomeHistory();
+    });
+}
+
+/* =====================================================
+   NAV — show/hide sections
+   ===================================================== */
+function showSection(targetId) {
+    document.querySelectorAll('.section').forEach(function(s) {
+        s.classList.add('hidden');
+    });
+    document.querySelectorAll('.nav-btn').forEach(function(b) {
+        b.classList.remove('active');
+    });
+
+    var section = document.getElementById(targetId);
+    if (section) section.classList.remove('hidden');
+
+    var btn = document.querySelector('.nav-btn[data-target="' + targetId + '"]');
+    if (btn) btn.classList.add('active');
+
+    /* Refresh income whenever that tab is opened */
+    if (targetId === 'income') {
+        refreshIncomeSummary();
+        renderIncomeHistory();
+    }
+}
+
+document.querySelectorAll('.nav-btn[data-target]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        showSection(btn.getAttribute('data-target'));
+    });
+});
+
+/* Show dashboard by default */
+document.addEventListener('DOMContentLoaded', function() {
+    var anyVisible = Array.from(document.querySelectorAll('.section')).some(function(s) {
+        return !s.classList.contains('hidden');
+    });
+    if (!anyVisible) showSection('dashboard');
+    refreshIncomeSummary();
+    renderIncomeHistory();
+});
+
+/* =====================================================
+   DASHBOARD SUB-TABS
+   ===================================================== */
+document.querySelectorAll('.subsection-tab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var panel = btn.getAttribute('data-panel');
+        document.querySelectorAll('.subsection-tab').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.subsection-panel').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var panelEl = document.getElementById(panel);
+        if (panelEl) panelEl.classList.add('active');
+        if (panel === 'panelTrends') drawTrendGraph(7);
+    });
+});
+
+/* =====================================================
+   TREND GRAPH (canvas)
+   ===================================================== */
+document.querySelectorAll('.trend-tab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.trend-tab').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        drawTrendGraph(Number(btn.getAttribute('data-period')));
+    });
+});
+
+function drawTrendGraph(days) {
+    var canvas = document.getElementById('trendCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var w = canvas.offsetWidth || 400;
+    var h = canvas.offsetHeight || 200;
+    canvas.width  = w;
+    canvas.height = h;
+    ctx.clearRect(0, 0, w, h);
+
+    var pts = [];
+    for (var i = 0; i < days; i++) {
+        pts.push({ x: i / (days - 1), y: 0.1 + Math.random() * 0.7 });
+    }
+
+    var pad      = 20;
+    var isDark   = document.body.dataset.theme === 'dark';
+    var gridClr  = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+
+    /* Grid */
+    ctx.strokeStyle = gridClr;
+    ctx.lineWidth   = 1;
+    [0.25, 0.5, 0.75, 1].forEach(function(v) {
+        var y = pad + (1 - v) * (h - pad * 2);
+        ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w - pad, y); ctx.stroke();
+    });
+
+    /* Fill */
+    ctx.beginPath();
+    pts.forEach(function(p, i) {
+        var x = pad + p.x * (w - pad * 2);
+        var y = pad + (1 - p.y) * (h - pad * 2);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.lineTo(pad + pts[pts.length - 1].x * (w - pad * 2), h - pad);
+    ctx.lineTo(pad, h - pad);
+    ctx.closePath();
+    ctx.fillStyle = isDark ? 'rgba(0,123,255,0.25)' : 'rgba(0,123,255,0.12)';
+    ctx.fill();
+
+    /* Line */
+    ctx.beginPath();
+    pts.forEach(function(p, i) {
+        var x = pad + p.x * (w - pad * 2);
+        var y = pad + (1 - p.y) * (h - pad * 2);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = '#007BFF';
+    ctx.lineWidth   = 2.5;
+    ctx.lineJoin    = 'round';
+    ctx.stroke();
+
+    /* Dots */
+    pts.forEach(function(p) {
+        var x = pad + p.x * (w - pad * 2);
+        var y = pad + (1 - p.y) * (h - pad * 2);
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#28A745';
+        ctx.fill();
+    });
+
+    /* Date labels */
+    var today  = new Date();
+    var start  = new Date(today);
+    start.setDate(today.getDate() - days + 1);
+    var opts   = { month: 'short', day: 'numeric' };
+    var startEl = document.getElementById('trendStartLabel');
+    var endEl   = document.getElementById('trendEndLabel');
+    if (startEl) startEl.textContent = start.toLocaleDateString('en-US', opts);
+    if (endEl)   endEl.textContent   = 'Today';
+}
+
+window.addEventListener('load', function() {
+    setTimeout(function() { drawTrendGraph(7); }, 200);
+});
+
+/* =====================================================
+   QUICK-ADD FAB
+   ===================================================== */
+var fab    = document.getElementById('fabBtn');
+var drawer = document.getElementById('quickAddDrawer');
+var qClose = document.getElementById('quickAddClose');
+
+if (fab) {
+    fab.addEventListener('click', function() {
+        drawer.classList.toggle('open');
+        if (drawer.classList.contains('open')) {
+            var qDesc = document.getElementById('qDesc');
+            if (qDesc) qDesc.focus();
+        }
+    });
+}
+if (qClose) {
+    qClose.addEventListener('click', function() { drawer.classList.remove('open'); });
+}
+
+var qSaveBtn = document.getElementById('qSaveBtn');
+if (qSaveBtn) {
+    qSaveBtn.addEventListener('click', function() {
+        var descEl   = document.getElementById('qDesc');
+        var amountEl = document.getElementById('qAmount');
+        var status   = document.getElementById('qStatus');
+        var desc     = descEl ? descEl.value.trim() : '';
+        var amount   = amountEl ? parseFloat(amountEl.value) : NaN;
+
+        if (!desc || isNaN(amount) || amount <= 0) {
+            status.textContent = 'Please fill in description and a valid amount.';
+            status.style.color = '#DC3545';
+            return;
+        }
+        status.textContent = 'Expense saved!';
+        status.style.color = '#28A745';
+        if (descEl)   descEl.value   = '';
+        if (amountEl) amountEl.value = '';
+        setTimeout(function() {
+            status.textContent = '';
+            drawer.classList.remove('open');
+        }, 1500);
+        /* Hook into your storage.js addRecord() here */
+    });
+}
+
+/* =====================================================
+   SAVINGS GOALS
+   ===================================================== */
+var addGoalBtn = document.getElementById('addGoalBtn');
+if (addGoalBtn) {
+    addGoalBtn.addEventListener('click', function() {
+        var nameEl   = document.getElementById('goalName');
+        var targetEl = document.getElementById('goalTarget');
+        var savedEl  = document.getElementById('goalSaved');
+        var dateEl   = document.getElementById('goalDate');
+        var status   = document.getElementById('goalStatus');
+
+        var name   = nameEl   ? nameEl.value.trim()        : '';
+        var target = targetEl ? parseFloat(targetEl.value) : NaN;
+        var saved  = savedEl  ? parseFloat(savedEl.value)  : 0;
+        var date   = dateEl   ? dateEl.value               : '';
+
+        if (isNaN(saved)) saved = 0;
+
+        if (!name || isNaN(target) || target <= 0) {
+            status.textContent = 'Please enter a goal name and target amount.';
+            status.style.color = '#DC3545';
+            return;
+        }
+
+        var pct  = Math.min(100, Math.round((saved / target) * 100));
+        var grid = document.getElementById('goalsGrid');
+        var card = document.createElement('div');
+        card.className = 'goal-card';
+        card.innerHTML =
+            '<div class="goal-name">' + name + '</div>' +
+            '<div class="goal-amounts">$' + saved.toFixed(2) + ' saved of $' + target.toFixed(2) + ' target</div>' +
+            '<div class="goal-progress-track"><div class="goal-progress-fill" style="width:' + pct + '%"></div></div>' +
+            '<div class="goal-pct">' + pct + '%</div>' +
+            (date ? '<div class="goal-target-date">Target: ' + new Date(date + 'T00:00:00').toLocaleDateString('en-US', {month:'short', year:'numeric'}) + '</div>' : '') +
+            '<div class="goal-actions">' +
+                '<button class="edit-btn">Add Funds</button>' +
+                '<button class="delete-btn remove-goal-btn">Remove</button>' +
+            '</div>';
+
+        card.querySelector('.remove-goal-btn').addEventListener('click', function() {
+            card.remove();
+        });
+
+        grid.prepend(card);
+
+        status.textContent = 'Goal "' + name + '" added!';
+        status.style.color = '#28A745';
+
+        if (nameEl)   nameEl.value   = '';
+        if (targetEl) targetEl.value = '';
+        if (savedEl)  savedEl.value  = '';
+        if (dateEl)   dateEl.value   = '';
+
+        setTimeout(function() { status.textContent = ''; }, 2500);
+    });
+}
+
+/* =====================================================
+   BILLS
+   ===================================================== */
+var addBillBtn = document.getElementById('addBillBtn');
+if (addBillBtn) {
+    addBillBtn.addEventListener('click', function() {
+        var nameEl   = document.getElementById('billName');
+        var amtEl    = document.getElementById('billAmount');
+        var dueEl    = document.getElementById('billDueDate');
+        var freqEl   = document.getElementById('billFreq');
+        var status   = document.getElementById('billStatus');
+
+        var name   = nameEl ? nameEl.value.trim()        : '';
+        var amount = amtEl  ? parseFloat(amtEl.value)    : NaN;
+        var due    = dueEl  ? dueEl.value                : '';
+        var freq   = freqEl ? freqEl.value               : 'Monthly';
+
+        if (!name || isNaN(amount) || amount <= 0 || !due) {
+            status.textContent = 'Please fill in all bill fields.';
+            status.style.color = '#DC3545';
+            return;
+        }
+
+        var daysUntil  = Math.round((new Date(due) - new Date()) / 86400000);
+        var badgeClass = '';
+        var badgeText  = 'Upcoming';
+
+        if (daysUntil < 0)       { badgeClass = 'overdue';  badgeText = 'Overdue'; }
+        else if (daysUntil <= 5) { badgeClass = 'due-soon'; badgeText = 'Due Soon'; }
+
+        var metaText = daysUntil < 0
+            ? 'Overdue by ' + Math.abs(daysUntil) + ' day(s) \u00b7 ' + freq
+            : 'Due in ' + daysUntil + ' day(s) \u00b7 ' + freq;
+
+        var list = document.getElementById('billsList');
+        var item = document.createElement('div');
+        item.className = 'bill-item ' + badgeClass;
+        item.innerHTML =
+            '<div class="bill-info">' +
+                '<div class="bill-name">' + name + '</div>' +
+                '<div class="bill-meta">' + metaText + '</div>' +
+            '</div>' +
+            '<span class="bill-badge ' + badgeClass + '">' + badgeText + '</span>' +
+            '<div class="bill-amount">$' + amount.toFixed(2) + '</div>';
+
+        list.prepend(item);
+
+        status.textContent = '"' + name + '" added to bills!';
+        status.style.color = '#28A745';
+
+        if (nameEl) nameEl.value = '';
+        if (amtEl)  amtEl.value  = '';
+        if (dueEl)  dueEl.value  = '';
+
+        setTimeout(function() { status.textContent = ''; }, 2500);
+    });
+}
+</script>
+
 <script src="scripts/storage.js"></script>
 <script src="scripts/validators.js"></script>
 <script src="scripts/search.js"></script>

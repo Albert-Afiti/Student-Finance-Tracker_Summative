@@ -1,4 +1,5 @@
-// THe storage.js handles localStorage on the browser
+// storage.js — localStorage persistence layer for FinTrace
+
 window.App = window.App || {};
 
 (function(App) {
@@ -6,14 +7,11 @@ window.App = window.App || {};
 
     const load = () => {
         const stored = localStorage.getItem(KEY);
-        if (stored) {
-            try {
-                return JSON.parse(stored) || [];
-            } catch {
-                console.error("Failed to parse stored JSON.");
-                return [];
-            }
-        } else {
+        if (!stored) return [];
+        try {
+            return JSON.parse(stored) || [];
+        } catch {
+            console.error('FinTrace: Failed to parse stored data.');
             return [];
         }
     };
@@ -24,5 +22,3 @@ window.App = window.App || {};
 
     App.Storage = { load, save };
 })(window.App);
-
-

@@ -1,18 +1,18 @@
-// 
+// state.js — Application state and record CRUD for FinTrace
+
 (function(App) {
     let records = App.Storage.load();
 
-    // Currency settings and rates and their corresponding symbols
     const CURRENCY_RATES = {
         USD: 1.0,
         RWF: 1300.0
     };
+
     const CURRENCY_SYMBOLS = {
         USD: '$',
         RWF: 'Fr'
     };
 
-    // Display currency and budget settings from the local storage
     let settings = {
         displayCurrency: localStorage.getItem('app:currency') || 'USD',
         budget: parseFloat(localStorage.getItem('app:cap')) || 200
@@ -29,8 +29,8 @@
     }
 
     function getCurrencyDisplay(amount, currencyCode = settings.displayCurrency) {
-        const symbol = CURRENCY_SYMBOLS[currencyCode] || '$';
-        const rate = CURRENCY_RATES[currencyCode] || 1.0;
+        const symbol   = CURRENCY_SYMBOLS[currencyCode] || '$';
+        const rate     = CURRENCY_RATES[currencyCode] || 1.0;
         const converted = amount * rate;
         return `${converted.toFixed(2)} ${symbol}`;
     }
@@ -41,54 +41,43 @@
     }
 
     function addRecord(data) {
-        const newRecord = {
-            id: generateId(),
+        const rec = {
+            id:          generateId(),
             description: data.description.trim(),
-            amount: parseFloat(data.amount),
-            category: data.category.trim(),
-            date: data.date,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            amount:      parseFloat(data.amount),
+            category:    data.category.trim(),
+            date:        data.date,
+            createdAt:   new Date().toISOString(),
+            updatedAt:   new Date().toISOString(),
         };
-        records.unshift(newRecord);
+        records.unshift(rec);
         App.Storage.save(records);
-        
-        if (App.UI && App.UI.renderDashboard) {
-            App.UI.renderDashboard();
-        }
+
+        if (App.UI?.renderDashboard) App.UI.renderDashboard();
     }
 
     function editRecord(id, updates) {
-        const index = records.findIndex(record => record.id === id);
+        const index = records.findIndex(r => r.id === id);
         if (index === -1) return;
 
-        const record = records[index];
-        if (updates.description) record.description = updates.description.trim();
-        if (updates.amount) record.amount = parseFloat(updates.amount);
-        if (updates.category) record.category = updates.category.trim();
-        if (updates.date) record.date = updates.date;
+        const rec = records[index];
+        if (updates.description) rec.description = updates.description.trim();
+        if (updates.amount)      rec.amount       = parseFloat(updates.amount);
+        if (updates.category)    rec.category     = updates.category.trim();
+        if (updates.date)        rec.date         = updates.date;
+        rec.updatedAt = new Date().toISOString();
 
-        record.updatedAt = new Date().toISOString();
         App.Storage.save(records);
-        
-        if (App.UI && App.UI.renderDashboard) {
-            App.UI.renderDashboard();
-        }
+        if (App.UI?.renderDashboard) App.UI.renderDashboard();
     }
 
     function deleteRecord(id) {
         const index = records.findIndex(r => r.id === id);
-        if (index !== -1) {
-            records.splice(index, 1);
-        }
+        if (index !== -1) records.splice(index, 1);
         App.Storage.save(records);
-        
-        if (App.UI && App.UI.renderDashboard) {
-            App.UI.renderDashboard();
-        }
+        if (App.UI?.renderDashboard) App.UI.renderDashboard();
     }
 
-    
     let sortState = {
         key: 'date',
         dir: 'desc'

@@ -1,4 +1,4 @@
-// This is the main script file. It does DOM manipulation and some interface works
+// ui.js — DOM manipulation and event handling for Student Finance Tracker
 
 (function(App) {
     const { settings, sortState, addRecord, editRecord, deleteRecord, updateSetting, getCurrencyDisplay } = App.State;
@@ -11,111 +11,108 @@
         return App.State.records;
     }
 
-    // Switching to section when corresponding button is clicked
+    // ── Section Navigation ──────────────────────────────
     function showSection(id) {
         document.querySelectorAll('main section').forEach(section => {
-            section.classList.add('hidden-section');
+            section.classList.add('hidden');
         });
-        const targetSection = document.getElementById(id);
-        if (targetSection) {
-            targetSection.classList.remove('hidden-section');
-            targetSection.setAttribute('tabindex', '-1');
-            targetSection.focus();
-            targetSection.removeAttribute('tabindex');
+
+        const target = document.getElementById(id);
+        if (target) {
+            target.classList.remove('hidden');
+            target.setAttribute('tabindex', '-1');
+            target.focus();
+            target.removeAttribute('tabindex');
         }
 
-        document.querySelectorAll('.nav-button').forEach(btn => {
-            const isSelected = btn.getAttribute('data-target') === id;
-            btn.classList.toggle('active', isSelected);
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-target') === id);
         });
     }
 
+    // ── Render Records ──────────────────────────────────
     function renderRecords() {
         const records = getRecords();
-        const sortedRecords = [...records].sort((a, b) => {
+
+        const sorted = [...records].sort((a, b) => {
             const { key, dir } = sortState;
-            let comparison = 0;
-
-            if (key === 'description') {
-                comparison = a.description.localeCompare(b.description);
-            } else if (key === 'amount') {
-                comparison = a.amount - b.amount;
-            } else if (key === 'date') {
-                comparison = new Date(a.date) - new Date(b.date);
-            }
-
-            return dir === 'asc' ? comparison : -comparison;
+            let cmp = 0;
+            if (key === 'description') cmp = a.description.localeCompare(b.description);
+            else if (key === 'amount')  cmp = a.amount - b.amount;
+            else if (key === 'date')    cmp = new Date(a.date) - new Date(b.date);
+            return dir === 'asc' ? cmp : -cmp;
         });
 
-        const finalRecords = filterRecords(sortedRecords, currentRegex);
-
+        const visible = filterRecords(sorted, currentRegex);
         const container = document.getElementById('recordsContainer');
         container.innerHTML = '';
 
-        if (finalRecords.length === 0) {
-            container.innerHTML = `<p style="text-align: center; color: #666; padding: 2rem;">No records found matching current filter/search criteria.</p>`;
+        if (visible.length === 0) {
+            container.innerHTML = '<p style="color:#888; padding:1rem 0;">No records found.</p>';
             return;
         }
 
-        finalRecords.forEach(record => {
-            const div = document.createElement('div');
-            div.className = 'record-card';
-            div.innerHTML = `              
-                <div class="record-category">${record.category}</div>
+        visible.forEach(record => {
+            const card = document.createElement('div');
+            card.className = 'record-card';
+            card.innerHTML = `
+                <p class="record-category">${record.category}</p>
                 <p class="record-description">${highlight(record.description, currentRegex)}</p>
                 <p class="record-amount">${getCurrencyDisplay(record.amount)}</p>
                 <p class="record-date">Date: ${record.date}</p>
                 <p class="record-updated">Updated: ${new Date(record.updatedAt).toLocaleDateString()}</p>
                 <div class="record-actions">
-                  <button class="edit-btn" data-id="${record.id}" aria-label="Edit record ${record.description}">Edit</button>
-                  <button class="delete-btn" data-id="${record.id}" aria-label="Delete record ${record.description}">Delete</button>
-                </div>              
+                    <button class="edit-btn" data-id="${record.id}" aria-label="Edit: ${record.description}">Edit</button>
+                    <button class="delete-btn" data-id="${record.id}" aria-label="Delete: ${record.description}">Delete</button>
+                </div>
             `;
-            container.appendChild(div);
+            container.appendChild(card);
         });
     }
 
-    // Dashboard settings
+    // ── Render Dashboard ────────────────────────────────
     function renderDashboard() {
         const records = getRecords();
-        const totalRecords = records.length;
-        const totalAmount = records.reduce((sum, r) => sum + r.amount, 0);
+        const total = records.reduce((s, r) => s + r.amount, 0);
 
-        const categoryCount = {};
-        records.forEach(r => {
-            categoryCount[r.category] = (categoryCount[r.category] || 0) + 1;
-        });
-        const topCategory = Object.entries(categoryCount)
-            .sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+        const catCount = {};
+        records.forEach(r => { catCount[r.category] = (catCount[r.category] || 0) + 1; });
+        const topCategory = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
 
-        document.getElementById('totalRecords').textContent = totalRecords;
-        document.getElementById('totalAmount').textContent = getCurrencyDisplay(totalAmount, settings.displayCurrency);
+        document.getElementById('totalRecords').textContent = records.length;
+        document.getElementById('totalAmount').textContent = getCurrencyDisplay(total);
         document.getElementById('topCategory').textContent = topCategory;
 
+        // Budget status
         const cap = settings.budget;
-        const capMessage = document.getElementById('capMessage');
-        const remaining = cap - totalAmount;
+        const remaining = cap - total;
+        const msg = document.getElementById('capMessage');
 
-        capMessage.className = 'budget-status';
-
+        msg.style.cssText = '';
         if (remaining < 0) {
-            capMessage.setAttribute('aria-live', 'assertive');
-            capMessage.textContent = `🚨 Budget EXCEEDED! You are ${getCurrencyDisplay(Math.abs(remaining))} over your cap of ${getCurrencyDisplay(cap, 'USD')}.`;
-            capMessage.style.color = '#dc2626';
+            msg.setAttribute('aria-live', 'assertive');
+            msg.textContent = `Over budget! You are ${getCurrencyDisplay(Math.abs(remaining))} over your cap of ${getCurrencyDisplay(cap, 'USD')}.`;
+            msg.style.color = '#c0152a';
+            msg.style.borderColor = '#e5c8ce';
+            msg.style.backgroundColor = '#fdf0f2';
         } else if (remaining < cap * 0.2) {
-            capMessage.setAttribute('aria-live', 'polite');
-            capMessage.textContent = `⚠️ Warning: You have ${getCurrencyDisplay(remaining)} remaining. Use caution!`;
-            capMessage.style.color = '#d97706';
+            msg.setAttribute('aria-live', 'polite');
+            msg.textContent = `Low budget: ${getCurrencyDisplay(remaining)} remaining of ${getCurrencyDisplay(cap, 'USD')}.`;
+            msg.style.color = '#6b1a2f';
+            msg.style.borderColor = '#f5c518';
+            msg.style.backgroundColor = '#fff8e6';
         } else {
-            capMessage.setAttribute('aria-live', 'polite');
-            capMessage.textContent = `✅ Good job! You have ${getCurrencyDisplay(remaining)} remaining out of your cap of ${getCurrencyDisplay(cap, 'USD')}.`;
-            capMessage.style.color = '#059669';
+            msg.setAttribute('aria-live', 'polite');
+            msg.textContent = `On track: ${getCurrencyDisplay(remaining)} remaining of ${getCurrencyDisplay(cap, 'USD')}.`;
+            msg.style.color = '#1a4fa0';
+            msg.style.borderColor = '#a8c0e0';
+            msg.style.backgroundColor = '#eef3fc';
         }
 
         renderTrendChart(records);
     }
 
-    // Expense chart
+    // ── Render Chart ────────────────────────────────────
     function renderTrendChart(records) {
         const chart = document.getElementById('trendChart');
         chart.innerHTML = '';
@@ -124,142 +121,160 @@
         today.setHours(0, 0, 0, 0);
 
         const dailyTotals = Array(7).fill(0);
-
         records.forEach(r => {
-            const date = new Date(r.date);
-            date.setHours(0, 0, 0, 0);
-
-            const diffMs = today.getTime() - date.getTime();
-            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-            if (diffDays >= 0 && diffDays < 7) {
-                dailyTotals[6 - diffDays] += r.amount;
-            }
+            const d = new Date(r.date);
+            d.setHours(0, 0, 0, 0);
+            const diff = Math.floor((today - d) / 86400000);
+            if (diff >= 0 && diff < 7) dailyTotals[6 - diff] += r.amount;
         });
 
-        const maxAmount = Math.max(...dailyTotals, 10);
+        const maxAmt = Math.max(...dailyTotals, 1);
 
-        dailyTotals.forEach((amount, index) => {
+        dailyTotals.forEach((amount, i) => {
             const bar = document.createElement('div');
-            const heightPercentage = amount > 0 ? Math.max((amount / maxAmount) * 100, 5) : 0;
-
+            const pct = amount > 0 ? Math.max((amount / maxAmt) * 100, 5) : 0;
             bar.className = 'chart-bar';
-            bar.style.height = `${heightPercentage}%`;
-            bar.title = `Day ${index + 1}: ${amount.toFixed(2)} USD`;
-            bar.setAttribute('aria-label', `Day ${index + 1}: ${amount.toFixed(2)} USD`);
+            bar.style.height = `${pct}%`;
+            bar.title = `Day ${i + 1}: ${amount.toFixed(2)} ${settings.displayCurrency}`;
+            bar.setAttribute('aria-label', `Day ${i + 1}: ${amount.toFixed(2)} ${settings.displayCurrency}`);
             chart.appendChild(bar);
         });
     }
 
-    function handleFormSubmit(event) {
-        event.preventDefault();
-        const form = event.target;
+    // ── Form Submit ─────────────────────────────────────
+    function handleFormSubmit(e) {
+        e.preventDefault();
 
         const data = {
             description: document.getElementById('desc').value,
-            amount: document.getElementById('amount').value,
-            category: document.getElementById('category').value,
-            date: document.getElementById('date').value
+            amount:      document.getElementById('amount').value,
+            category:    document.getElementById('category').value,
+            date:        document.getElementById('date').value,
         };
 
-        let isValid = true;
-        for (const field in data) {
-            const value = data[field];
-            const errorSpan = document.getElementById(`${field}Error`);
-            errorSpan.textContent = '';
+        let valid = true;
 
-            if (!validateField(field, value)) {
-                errorSpan.textContent = getErrorMessage(field);
-                isValid = false;
+        ['description', 'amount', 'date'].forEach(field => {
+            const errEl = document.getElementById(`${field}Error`);
+            errEl.textContent = '';
+            if (!validateField(field, data[field])) {
+                errEl.textContent = getErrorMessage(field);
+                valid = false;
             }
+        });
+
+        // Category validation
+        const catErr = document.getElementById('categoryError');
+        catErr.textContent = '';
+        if (!data.category) {
+            catErr.textContent = 'Please select a category.';
+            valid = false;
         }
 
-        // Advanced regex check for duplicate words
-        const advancedCheck = rules.advanced.test(data.description);
-        const descErrorSpan = document.getElementById('descriptionError');
-        if (advancedCheck) {
-            descErrorSpan.textContent = getErrorMessage('advanced');
-            isValid = false;
+        // Advanced: duplicate-word check
+        if (rules.advanced.test(data.description)) {
+            document.getElementById('descriptionError').textContent = getErrorMessage('advanced');
+            valid = false;
         }
 
-        if (!isValid) return;
+        if (!valid) return;
 
         const recordId = document.getElementById('recordId').value;
-
         if (recordId) {
             editRecord(recordId, data);
         } else {
             addRecord(data);
         }
 
+        e.target.reset();
+        document.getElementById('recordId').value = '';
+        document.getElementById('cancelEditBtn').style.display = 'none';
+
         renderRecords();
         renderDashboard();
-        form.reset();
-        document.getElementById('recordId').value = '';
         showSection('records');
     }
 
+    // ── Setup All Listeners ─────────────────────────────
     function setupListeners() {
         // Navigation
-        document.querySelectorAll('[data-target]').forEach(button => {
-            button.addEventListener('click', () => showSection(button.getAttribute('data-target')));
+        document.querySelectorAll('[data-target]').forEach(btn => {
+            btn.addEventListener('click', () => showSection(btn.getAttribute('data-target')));
         });
 
         showSection('dashboard');
 
-        // Form Submit
+        // Form submit
         document.getElementById('recordForm').addEventListener('submit', handleFormSubmit);
 
-        // Edit/Delete Buttons
-        document.getElementById('recordsContainer').addEventListener('click', (e) => {
+        // Cancel edit
+        document.getElementById('cancelEditBtn').addEventListener('click', () => {
+            document.getElementById('recordForm').reset();
+            document.getElementById('recordId').value = '';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            showSection('records');
+        });
+
+        // Edit / Delete (event delegation on container)
+        document.getElementById('recordsContainer').addEventListener('click', e => {
             const target = e.target;
             const id = target.getAttribute('data-id');
-            const records = getRecords();
 
             if (target.classList.contains('edit-btn')) {
-                const record = records.find(r => r.id === id);
-                if (record) {
-                    document.getElementById('recordId').value = record.id;
-                    document.getElementById('desc').value = record.description;
-                    document.getElementById('amount').value = record.amount;
-                    document.getElementById('category').value = record.category;
-                    document.getElementById('date').value = record.date;
-                    showSection('forms');
-                }
-            } else if (target.classList.contains('delete-btn')) {
+                const rec = getRecords().find(r => r.id === id);
+                if (!rec) return;
+                document.getElementById('recordId').value = rec.id;
+                document.getElementById('desc').value = rec.description;
+                document.getElementById('amount').value = rec.amount;
+                document.getElementById('date').value = rec.date;
+                document.getElementById('category').value = rec.category;
+                document.getElementById('cancelEditBtn').style.display = 'inline-block';
+                showSection('forms');
+            }
+
+            if (target.classList.contains('delete-btn')) {
                 document.getElementById('confirmDeleteBtn').setAttribute('data-record-id', id);
                 document.getElementById('deleteModal').style.display = 'flex';
             }
         });
 
-        // Delete Modal Handlers
+        // Delete modal
         document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
             document.getElementById('deleteModal').style.display = 'none';
         });
 
-        document.getElementById('confirmDeleteBtn').addEventListener('click', (e) => {
-            const id = e.target.getAttribute('data-record-id');
-            deleteRecord(id);
+        document.getElementById('confirmDeleteBtn').addEventListener('click', e => {
+            deleteRecord(e.target.getAttribute('data-record-id'));
             renderRecords();
             renderDashboard();
             document.getElementById('deleteModal').style.display = 'none';
         });
 
+        document.getElementById('deleteModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('deleteModal')) {
+                document.getElementById('deleteModal').style.display = 'none';
+            }
+        });
+
         // Sorting
-        document.querySelectorAll('.sort-button').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const key = button.id.replace('sort', '').toLowerCase();
-                const currentDir = button.getAttribute('data-dir');
-                const newDir = (sortState.key === key && currentDir === 'asc') ? 'desc' : 'asc';
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const key = btn.id.replace('sort', '').toLowerCase();
+                const prevDir = btn.getAttribute('data-dir') || 'asc';
+                const newDir = (sortState.key === key && prevDir === 'asc') ? 'desc' : 'asc';
 
                 sortState.key = key;
                 sortState.dir = newDir;
 
-                document.querySelectorAll('.sort-button').forEach(btn => {
-                    const icon = btn.querySelector('.sort-icon');
-                    icon.textContent = (btn.id === button.id && newDir === 'desc') ? '↓' : '↑';
-                    btn.setAttribute('data-dir', (btn.id === button.id) ? newDir : 'asc');
+                document.querySelectorAll('.sort-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('data-dir', 'asc');
+                    b.querySelector('.sort-arrow').textContent = '↑';
                 });
+
+                btn.classList.add('active');
+                btn.setAttribute('data-dir', newDir);
+                btn.querySelector('.sort-arrow').textContent = newDir === 'desc' ? '↓' : '↑';
 
                 renderRecords();
             });
@@ -267,17 +282,17 @@
 
         // Search
         const searchInput = document.getElementById('searchInput');
-        const caseToggle = document.getElementById('caseToggle');
-        const regexStatus = document.getElementById('regexStatus');
+        const caseToggle  = document.getElementById('caseToggle');
+        const statusEl    = document.getElementById('regexStatus');
 
-        const handleSearch = () => {
+        function handleSearch() {
             const pattern = searchInput.value.trim();
-            const flags = caseToggle.checked ? 'i' : '';
+            const flags   = caseToggle.checked ? 'i' : '';
+            statusEl.textContent = '';
+            statusEl.style.color = '';
 
-            // If pattern is empty, show all records
             if (!pattern) {
                 currentRegex = null;
-                regexStatus.textContent = '';
                 renderRecords();
                 return;
             }
@@ -286,19 +301,18 @@
             currentRegex = regex;
 
             if (!regex) {
-                regexStatus.textContent = '⚠️ Invalid regex pattern. Please check syntax.';
-                regexStatus.style.color = '#dc2626';
+                statusEl.textContent = 'Invalid regex pattern.';
+                statusEl.style.color = '#c0152a';
             } else {
-                const records = getRecords();
-                const matchCount = records.filter(r =>
+                const count = getRecords().filter(r =>
                     regex.test(r.description) || regex.test(r.category)
                 ).length;
-                regexStatus.textContent = `✓ Valid pattern - ${matchCount} match(es) found`;
-                regexStatus.style.color = '#059669';
+                statusEl.textContent = `✓ ${count} match${count !== 1 ? 'es' : ''} found`;
+                statusEl.style.color = '#1a4fa0';
             }
 
             renderRecords();
-        };
+        }
 
         searchInput.addEventListener('input', handleSearch);
         caseToggle.addEventListener('change', handleSearch);
@@ -307,13 +321,13 @@
         document.getElementById('currencySelect').value = settings.displayCurrency;
         document.getElementById('budget').value = settings.budget;
 
-        document.getElementById('currencySelect').addEventListener('change', (e) => {
+        document.getElementById('currencySelect').addEventListener('change', e => {
             updateSetting('currency', e.target.value);
             renderDashboard();
             renderRecords();
         });
 
-        document.getElementById('budget').addEventListener('input', (e) => {
+        document.getElementById('budget').addEventListener('input', e => {
             updateSetting('cap', parseFloat(e.target.value) || 0);
             renderDashboard();
         });
@@ -321,14 +335,15 @@
         // Import
         document.getElementById('importBtn').addEventListener('click', () => {
             const fileInput = document.getElementById('importFile');
-            const status = document.getElementById('importStatus');
-            const file = fileInput.files[0];
-            const records = getRecords();
+            const statusEl  = document.getElementById('importStatus');
+            const file      = fileInput.files[0];
 
-            status.textContent = '';
+            statusEl.textContent = '';
+            statusEl.style.color = '';
 
             if (!file) {
-                status.textContent = 'Please choose a JSON file from your computer.';
+                statusEl.textContent = 'Please select a JSON file first.';
+                statusEl.style.color = '#c0152a';
                 return;
             }
 
@@ -336,33 +351,32 @@
             reader.onload = () => {
                 try {
                     const imported = JSON.parse(reader.result);
-
                     if (!Array.isArray(imported)) {
-                        status.textContent = '❌ Import failed: Ensure that the file contents are JSON arrays.';
+                        statusEl.textContent = 'File must contain a JSON array.';
+                        statusEl.style.color = '#c0152a';
                         return;
                     }
-
-                    const isValidStructure = imported.every(validateRecordStructure);
-
-                    if (!isValidStructure) {
-                        status.textContent = '❌ Import failed: Data structure is missing some fields (or wrong types).';
+                    if (!imported.every(validateRecordStructure)) {
+                        statusEl.textContent = 'One or more records have an invalid structure.';
+                        statusEl.style.color = '#c0152a';
                         return;
                     }
-
-                    imported.forEach(record => {
-                        record.id = App.State.generateId();
-                        record.createdAt = new Date().toISOString();
-                        record.updatedAt = new Date().toISOString();
-                        records.push(record);
+                    const records = getRecords();
+                    imported.forEach(rec => {
+                        rec.id        = App.State.generateId();
+                        rec.createdAt = new Date().toISOString();
+                        rec.updatedAt = new Date().toISOString();
+                        records.push(rec);
                     });
-
                     App.Storage.save(records);
                     renderRecords();
                     renderDashboard();
-                    status.textContent = `✅ Import success. You have added ${imported.length} records.`;
+                    statusEl.textContent = ` Imported ${imported.length} record(s) successfully.`;
+                    statusEl.style.color = '#1a4fa0';
                     fileInput.value = '';
-                } catch (e) {
-                    status.textContent = `❌ Invalid format.`;
+                } catch {
+                    statusEl.textContent = 'Invalid JSON format.';
+                    statusEl.style.color = '#c0152a';
                 }
             };
             reader.readAsText(file);
@@ -370,13 +384,11 @@
 
         // Export
         document.getElementById('exportBtn').addEventListener('click', () => {
-            const records = getRecords();
-            const dataStr = JSON.stringify(records, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'finance_tracker_export.json';
+            const blob = new Blob([JSON.stringify(getRecords(), null, 2)], { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = `finance_tracker_export_${new Date().toISOString().slice(0, 10)}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -384,40 +396,30 @@
         });
     }
 
-    // Dark Mode 
+    // ── Dark Mode ───────────────────────────────────────
     function setupDarkMode() {
-        const toggleBtn = document.getElementById('darkModeToggle');
-        if (!toggleBtn) return;
+        const btn  = document.getElementById('darkModeToggle');
+        const icon = document.getElementById('themeIcon');
+        if (!btn) return;
 
-        const savedTheme = localStorage.getItem('app:theme') || 'light';
-        document.body.setAttribute('data-theme', savedTheme);
+        const saved = localStorage.getItem('app:theme') || 'light';
+        document.body.setAttribute('data-theme', saved);
+        icon.textContent = saved === 'dark' ? '☀️' : '🌙';
 
-        toggleBtn.addEventListener('click', () => {
-            const currentTheme = document.body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-            document.body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('app:theme', newTheme);
-
-            // Update toggle icon
-            const icon = toggleBtn.querySelector('.toggle-icon');
-            if (icon) {
-                icon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-            }
+        btn.addEventListener('click', () => {
+            const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', next);
+            localStorage.setItem('app:theme', next);
+            icon.textContent = next === 'dark' ? '☀️' : '🌙';
         });
-
-        // Set initial icon
-        const icon = toggleBtn.querySelector('.toggle-icon');
-        if (icon) {
-            icon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-        }
     }
 
+    // ── Public API ───────────────────────────────────────
     App.UI = { renderDashboard, renderRecords, setupListeners };
 
     document.addEventListener('DOMContentLoaded', () => {
-        setupListeners();
         setupDarkMode();
+        setupListeners();
         renderRecords();
         renderDashboard();
     });

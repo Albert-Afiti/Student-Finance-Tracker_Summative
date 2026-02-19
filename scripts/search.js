@@ -1,12 +1,12 @@
-// This file controls the regex search section
+// search.js — Regex search, highlight, filter, and vanilla HTML scraper for FinTrace
+// No frameworks. Uses native DOMParser for the scraper section.
 
 (function(App) {
     const compileRegex = (input, flags = '') => {
         try {
-            const effectiveFlags = input ? flags : '';
-            return input ? new RegExp(input, effectiveFlags) : null;
+            return input ? new RegExp(input, flags) : null;
         } catch {
-            return null; 
+            return null;
         }
     };
 
@@ -15,111 +15,103 @@
         try {
             return text.replace(regex, match => `<mark>${match}</mark>`);
         } catch {
-            return text; 
+            return text;
         }
     };
 
     const filterRecords = (records, regex) => {
         if (!regex) return records;
-
-        return records.filter(record => {
-            
-            return regex.test(record.description) || regex.test(record.category);
-        });
+        return records.filter(r => regex.test(r.description) || regex.test(r.category));
     };
 
     App.Search = { compileRegex, highlight, filterRecords };
 })(window.App);
 
 
-// Mini jQuery Scraper 
+// ── Vanilla HTML Scraper (uses native DOMParser — no jQuery) ─────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
     const scrapeBtn = document.getElementById('scrapeBtn');
     const htmlInput = document.getElementById('htmlInput');
-    const outputElement = document.getElementById('output');
+    const outputEl  = document.getElementById('output');
 
-    if (!scrapeBtn || !htmlInput || !outputElement) return;
+    if (!scrapeBtn || !htmlInput || !outputEl) return;
 
-    // Clear output when input is cleared
+    // Clear output when textarea is emptied
     htmlInput.addEventListener('input', () => {
-        if (htmlInput.value.trim() === '') {
-            outputElement.textContent = '';
+        if (!htmlInput.value.trim()) {
+            outputEl.textContent = '// Output will appear here';
+            outputEl.style.color = '';
         }
     });
 
     scrapeBtn.addEventListener('click', () => {
-        const inputValue = htmlInput.value.trim();
+        const input = htmlInput.value.trim();
 
-        
-        if (!inputValue) {
-            outputElement.textContent = 'Please paste HTML content to scrape.';
-            outputElement.style.color = '#dc2626';
+        if (!input) {
+            outputEl.textContent = '// No input — paste an HTML snippet above.';
+            outputEl.style.color = 'var(--red)';
             return;
         }
 
-        
-        if (typeof $ === 'undefined') {
-            outputElement.textContent = 'Error: jQuery not loaded';
-            outputElement.style.color = '#dc2626';
-            return;
-        }
+        // Parse HTML using the native DOMParser API (no framework required)
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(input, 'text/html');
 
-        const $dom = $('<div>').html(inputValue);
-
-        const output = {
-            headings: [],
-            links: [],
-            images: [],
-            tables: [],
+        const result = {
+            headings:   [],
+            links:      [],
+            images:     [],
+            tables:     [],
             formFields: []
         };
 
-        // scraping for headings
-        $dom.find('h1, h2, h3, h4, h5, h6').each(function() {
-            const text = $(this).text().trim();
-            if (text) output.headings.push(text);
+        // Headings
+        doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(el => {
+            const text = el.textContent.trim();
+            if (text) result.headings.push(text);
         });
 
-        // craping for links
-        $dom.find('a[href]').each(function() {
-            output.links.push({
-                text: $(this).text().trim(),
-                href: $(this).attr('href')
+        // Links
+        doc.querySelectorAll('a[href]').forEach(el => {
+            result.links.push({
+                text: el.textContent.trim(),
+                href: el.getAttribute('href')
             });
         });
 
-        // scraping for images
-        $dom.find('img[src]').each(function() {
-            output.images.push({
-                src: $(this).attr('src'),
-                alt: $(this).attr('alt') || ''
+        // Images
+        doc.querySelectorAll('img[src]').forEach(el => {
+            result.images.push({
+                src: el.getAttribute('src'),
+                alt: el.getAttribute('alt') || ''
             });
         });
 
-        // scraping for tables
-        $dom.find('table').each(function() {
+        // Tables
+        doc.querySelectorAll('table').forEach(table => {
             const rows = [];
-            $(this).find('tr').each(function() {
+            table.querySelectorAll('tr').forEach(tr => {
                 const cells = [];
-                $(this).find('th, td').each(function() {
-                    const text = $(this).text().trim();
-                    cells.push(text);
+                tr.querySelectorAll('th, td').forEach(cell => {
+                    cells.push(cell.textContent.trim());
                 });
                 if (cells.length) rows.push(cells);
             });
-            if (rows.length) output.tables.push(rows);
+            if (rows.length) result.tables.push(rows);
         });
 
-        // sxcraping for form fields
-        $dom.find('input, select, textarea').each(function() {
-            const tag = this.tagName.toLowerCase();
-            const name = $(this).attr('name') || '';
-            const type = $(this).attr('type') || '';
-            const value = $(this).val() || '';
-            output.formFields.push({ tag, name, type, value });
+        // Form fields
+        doc.querySelectorAll('input, select, textarea').forEach(el => {
+            result.formFields.push({
+                tag:   el.tagName.toLowerCase(),
+                name:  el.getAttribute('name') || '',
+                type:  el.getAttribute('type') || '',
+                value: el.value || ''
+            });
         });
 
-        outputElement.textContent = JSON.stringify(output, null, 2);
-        outputElement.style.color = ''; // Reset color
+        outputEl.textContent = JSON.stringify(result, null, 2);
+        outputEl.style.color = '';
     });
 });
