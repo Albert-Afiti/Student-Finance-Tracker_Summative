@@ -26,6 +26,7 @@ A responsive, accessible, and modular web application for tracking personal fina
 
 ## Live Demo
 https://albert-afiti.github.io/Student-Finance-Tracker_Summative/
+
 **GitHub Pages URL**:
 https://github.com/Albert-Afiti/Student-Finance-Tracker_Summative.git
 ---
